@@ -1,0 +1,12 @@
+biased-text-sample
+==================
+
+by Joseph Turian
+
+
+Make a biased sample of a large text corpus, based upon text in a smaller text corpus.
+Essentially, Lucene index the large text corpus, and for each document
+in the smaller corpus retrieve the top ten Lucene results.
+
+Pipe a large stream of text into the indexer:
+    /u/turian/data/web_corpus/WaCky2/sentencesplit.py  | ./index-sentences.py
