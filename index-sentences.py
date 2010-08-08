@@ -55,7 +55,7 @@ if __name__ == "__main__":
         doc.add(Field("text", l, Field.Store.YES, Field.Index.ANALYZED))
         writer.addDocument(doc)
 
-        if i % 1000 == 0:
+        if i % 10000 == 0:
             print >> sys.stderr, "Read %d lines from stdin (%d documents in index)..." % (i, writer.numDocs())
             print >> sys.stderr, stats()
 #        if i > 100000: break
