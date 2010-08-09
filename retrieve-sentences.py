@@ -25,8 +25,8 @@ from lucene import \
     SimpleFSDirectory, System, File, \
     Document, Field, StandardAnalyzer, IndexSearcher, Version, QueryParser
 
-def retrieve(querytext, searcher, analyzer, maxresults=1000):
-    query = QueryParser(Version.LUCENE_30, "text", analyzer).parse(querytext)
+def retrieve(querytext, searcher, queryparser, maxresults=1000):
+    query = queryparser.parse(queryparser.escape(querytext))
 #    query = QueryParser(analyzer).parse("Find this sentence please")
     hits = searcher.search(query, maxresults)
 
@@ -47,24 +47,24 @@ if __name__ == "__main__":
 #    indexDir = "lucene.ukwac"
     dir = SimpleFSDirectory(File(indexDir))
     analyzer = StandardAnalyzer(Version.LUCENE_30)
+    queryparser = QueryParser(Version.LUCENE_30, "text", analyzer)
     searcher = IndexSearcher(dir)
 
     oldcorpus = sets.Set()
     newcorpus = sets.Set()
 
-    for i, l in enumerate(open("/data/lisa5/DARPA/OpenTable/OpenTable-train-85739.ascii")):
+    for i, l in enumerate(sys.stdin):
         if i % 100 == 0:
             print >> sys.stderr, "Read %d lines from sys.stdin (newcorpus has %d documents)..." % (i, len(newcorpus))
             print >> sys.stderr, stats()
-        l = l[2:]
+        l = string.strip(l)
         # Don't use duplicate sentences
         if l in oldcorpus: continue
 
         origcnt = len(newcorpus)
-        for newl in retrieve(l, searcher, analyzer):
+        for newl in retrieve(l, searcher, queryparser):
             # Iterate until we have added DESIRED_NEW_DOCUMENTS_PER_ORIGINAL_DOCUMENT documents
             if len(newcorpus) >= origcnt + DESIRED_NEW_DOCUMENTS_PER_ORIGINAL_DOCUMENT: break
-            newcorpus.add(newl)
-
-    for l in newcorpus:
-        print l.encode("utf-8")
+            if newl not in newcorpus:
+                newcorpus.add(newl)
+                print string.strip(newl).encode("utf-8")
