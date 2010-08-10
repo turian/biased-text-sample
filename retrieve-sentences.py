@@ -26,7 +26,7 @@ from lucene import \
     Document, Field, StandardAnalyzer, IndexSearcher, Version, QueryParser
 
 def retrieve(querytext, searcher, queryparser, maxresults=1000):
-    query = queryparser.parse(queryparser.escape(querytext))
+    query = queryparser.parse(queryparser.escape(querytext.replace("AND OR", "AND or")))
 #    query = QueryParser(analyzer).parse("Find this sentence please")
     hits = searcher.search(query, maxresults)
 
