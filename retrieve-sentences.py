@@ -27,6 +27,7 @@ from lucene import \
 
 def retrieve(querytext, searcher, queryparser, maxresults=1000):
     query = queryparser.parse(queryparser.escape(querytext.replace("AND OR", "AND or")))
+    query = queryparser.parse(queryparser.escape(querytext.replace("AND AND", "AND and")))
 #    query = QueryParser(analyzer).parse("Find this sentence please")
     hits = searcher.search(query, maxresults)
 
@@ -43,8 +44,8 @@ if __name__ == "__main__":
     # create an index called 'index-dir' in a temp directory
 #    indexDir = os.path.join(System.getProperty('java.io.tmpdir', 'tmp'),
 #                            'index-dir')
-    indexDir = "/Tmp/REMOVEME.index-dir"
-#    indexDir = "lucene.ukwac"
+#    indexDir = "/Tmp/REMOVEME.index-dir"
+    indexDir = "lucene.ukwac"
     dir = SimpleFSDirectory(File(indexDir))
     analyzer = StandardAnalyzer(Version.LUCENE_30)
     queryparser = QueryParser(Version.LUCENE_30, "text", analyzer)
