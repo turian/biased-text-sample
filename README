@@ -10,3 +10,11 @@ in the smaller corpus retrieve the top ten Lucene results.
 
 Pipe a large stream of text into the indexer:
     /u/turian/data/web_corpus/WaCky2/sentencesplit.py  | ./index-sentences.py
+
+
+REQUIREMENTS:
+    * numpy
+        Used for Bloom filter.
+    * murmurhash
+        Used for Bloom filter.
+    * http://github.com/turian/common

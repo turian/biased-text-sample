@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 """
 Read one-sentence-per-line from stdin.
-Index each line in Lucene as a separate document.
+Retrieve closest Lucene matches for each sentence, without duplicating retrieved sentences.
+(We use a Bloom filter to detect duplicates.)
 
 TODO:
-    * Remove previous index, start from scratch.
-
-USAGE:
-    /u/turian/data/web_corpus/WaCky2/sentencesplit.py  | ./index-sentences.py
-
-NB we use the StandardAnalyzer, but should try the SnowballAnalyzer
+    * Detect duplicates in input sentences too?
 """
 
 import sys
@@ -17,8 +13,13 @@ import string
 import sets
 
 from common.stats import stats
+from common.str import percent
 
 DESIRED_NEW_DOCUMENTS_PER_ORIGINAL_DOCUMENT = 10
+
+BLOOM_FILTER_SIZE = 1000000000
+import numpy
+import murmur
 
 import lucene
 from lucene import \
@@ -40,6 +41,10 @@ def retrieve(querytext, searcher, queryparser, maxresults=1000):
         yield doc.get("text")
 
 if __name__ == "__main__":
+    usedsentences = numpy.zeros((BLOOM_FILTER_SIZE,), dtype=numpy.bool)
+    print >> sys.stderr, "Just created bloom filter with %d entries" % usedsentences.shape[0]
+    print >> sys.stderr, stats()
+
     lucene.initVM()
     # create an index called 'index-dir' in a temp directory
 #    indexDir = os.path.join(System.getProperty('java.io.tmpdir', 'tmp'),
@@ -51,21 +56,27 @@ if __name__ == "__main__":
     queryparser = QueryParser(Version.LUCENE_30, "text", analyzer)
     searcher = IndexSearcher(dir)
 
-    oldcorpus = sets.Set()
-    newcorpus = sets.Set()
+    nonzeros = 0
 
     for i, l in enumerate(sys.stdin):
         if i % 100 == 0:
-            print >> sys.stderr, "Read %d lines from sys.stdin (newcorpus has %d documents)..." % (i, len(newcorpus))
+            print >> sys.stderr, "Read %d lines from sys.stdin (bloom filter has %s nonzeros)..." % (i, percent(nonzeros, BLOOM_FILTER_SIZE))
             print >> sys.stderr, stats()
         l = string.strip(l)
-        # Don't use duplicate sentences
-        if l in oldcorpus: continue
-
-        origcnt = len(newcorpus)
+        
+        added_this_sentence = 0
         for newl in retrieve(l, searcher, queryparser):
             # Iterate until we have added DESIRED_NEW_DOCUMENTS_PER_ORIGINAL_DOCUMENT documents
-            if len(newcorpus) >= origcnt + DESIRED_NEW_DOCUMENTS_PER_ORIGINAL_DOCUMENT: break
-            if newl not in newcorpus:
-                newcorpus.add(newl)
-                print string.strip(newl).encode("utf-8")
+            if added_this_sentence >= DESIRED_NEW_DOCUMENTS_PER_ORIGINAL_DOCUMENT: break
+
+            newl = string.strip(newl)
+
+            # Hash the sentence
+            idx = murmur.string_hash(newl.encode("utf-8")) % BLOOM_FILTER_SIZE
+            # Don't use duplicate sentences
+            if usedsentences[idx]: continue
+
+            usedsentences[idx] = True
+            nonzeros += 1
+            added_this_sentence += 1
+            print newl.encode("utf-8")
