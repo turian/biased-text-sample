@@ -6,6 +6,12 @@ Retrieve closest Lucene matches for each sentence, without duplicating retrieved
 
 TODO:
     * Detect duplicates in input sentences too?
+    * Remove this bizarre special case:
+        querytext = querytext.replace("AND OR", "and or")
+        querytext = querytext.replace("OR OR", "or or")
+        querytext = querytext.replace("AND and", "and and")
+        querytext = querytext.replace("OR AND", "or and")
+    http://stackoverflow.com/questions/3452162/lucene-queryparser-interprets-and-or-as-a-command
 """
 
 import sys
@@ -27,8 +33,11 @@ from lucene import \
     Document, Field, StandardAnalyzer, IndexSearcher, Version, QueryParser
 
 def retrieve(querytext, searcher, queryparser, maxresults=1000):
-    query = queryparser.parse(queryparser.escape(querytext.replace("AND OR", "AND or")))
-    query = queryparser.parse(queryparser.escape(querytext.replace("AND AND", "AND and")))
+    querytext = querytext.replace("AND OR", "and or")
+    querytext = querytext.replace("OR OR", "or or")
+    querytext = querytext.replace("AND and", "and and")
+    querytext = querytext.replace("OR AND", "or and")
+    query = queryparser.parse(queryparser.escape(querytext))
 #    query = QueryParser(analyzer).parse("Find this sentence please")
     hits = searcher.search(query, maxresults)
 
