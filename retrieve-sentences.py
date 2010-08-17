@@ -33,10 +33,12 @@ from lucene import \
     Document, Field, StandardAnalyzer, IndexSearcher, Version, QueryParser
 
 def retrieve(querytext, searcher, queryparser, maxresults=1000):
-    querytext = querytext.replace("AND OR", "and or")
-    querytext = querytext.replace("OR OR", "or or")
-    querytext = querytext.replace("AND AND", "and and")
-    querytext = querytext.replace("OR AND", "or and")
+#    querytext = querytext.replace("AND OR", "and or")
+#    querytext = querytext.replace("OR OR", "or or")
+#    querytext = querytext.replace("AND AND", "and and")
+#    querytext = querytext.replace("OR AND", "or and")
+    querytext = querytext.replace("OR", "or")
+    querytext = querytext.replace("AND", "and")
     query = queryparser.parse(queryparser.escape(querytext))
 #    query = QueryParser(analyzer).parse("Find this sentence please")
     hits = searcher.search(query, maxresults)
